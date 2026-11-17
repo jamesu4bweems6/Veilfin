@@ -1,0 +1,8 @@
+/data/
+/client-data/
+*.exe
+/veilfin
+/dist/
+web/node_modules/
+web/tests/screenshots/
+*.vfbak

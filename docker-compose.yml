@@ -1,0 +1,25 @@
+# 服务端部署示例：docker compose up -d
+# 首次启动后执行 docker compose logs veilfin 查看“初始化代码”和“公钥指纹”。
+services:
+  veilfin:
+    build: .
+    image: veilfin:latest
+    container_name: veilfin
+    restart: unless-stopped
+    ports:
+      - "8097:8097"           # CDN 回源到这个端口（或放在下面的 Caddy 后面）
+    environment:
+      VF_WEB: "1"             # 同时提供网页模式（手机等无法运行本地客户端的设备使用），不需要可删除
+      # VF_MEDIA: /media/videos   # 可选：首次初始化时自动创建指向该目录的媒体库
+    volumes:
+      - ./data:/data          # 密钥 + 数据库 + 图片缓存，务必备份
+      - /mnt/media:/media:ro  # 媒体目录，只读挂载即可（若要在后台“删除文件”，去掉 :ro）
+
+  # 可选：MetaTube 刮削服务（日本影片番号刮削），在“服务器设置”里填 http://metatube:8080
+  # 下面的镜像名和启动参数仅为示意，请以 metatube-community/metatube-sdk-go 的官方文档为准。
+  # metatube:
+  #   image: ghcr.io/metatube-community/metatube-server:latest
+  #   restart: unless-stopped
+  #   command: -dsn /config/metatube.db
+  #   volumes:
+  #     - ./metatube:/config

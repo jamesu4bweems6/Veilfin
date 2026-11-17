@@ -1,0 +1,7 @@
+data
+client-data
+dist
+web/node_modules
+web/tests/screenshots
+*.exe
+*.vfbak

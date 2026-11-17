@@ -1,0 +1,131 @@
+/*
+ * 动效系统（iOS 风格）
+ * 曲线是用阻尼弹簧方程算出来的 linear() 采样，不支持 linear() 的浏览器自动回退到 cubic-bezier。
+ *   --spring        平滑弹簧（临界阻尼，无回弹）：页面、面板、指示器
+ *   --spring-bouncy 轻微回弹（约 4%）：按下、弹出菜单、对话框
+ */
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --spring-bouncy: cubic-bezier(0.34, 1.36, 0.64, 1);
+  --dur-fast: 0.18s;
+  --dur: 0.42s;
+  --dur-slow: 0.6s;
+}
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+    --spring: linear(0, 0.0446, 0.1443, 0.2642, 0.3849, 0.4963, 0.594, 0.6768, 0.7452, 0.8009, 0.8454, 0.8807, 0.9084, 0.93, 0.9467,
+      0.9596, 0.9694, 0.9769, 0.9826, 0.987, 0.9902, 0.9927, 0.9946, 0.9959, 1);
+    --spring-bouncy: linear(0, 0.0526, 0.1761, 0.3301, 0.4877, 0.6321, 0.7545, 0.8519, 0.9248, 0.9759, 1.0089, 1.0279, 1.0366, 1.0383,
+      1.0356, 1.0305, 1.0245, 1.0185, 1.0131, 1.0086, 1.0051, 1.0024, 1.0006, 0.9995, 0.9988, 0.9986, 0.9985, 0.9987, 1);
+  }
+}
+
+/* ---------- 页面切换 ---------- */
+/* 离场短而轻，入场用弹簧：整体感觉是“推入 / 弹回”，而不是生硬地替换 */
+.page-push-enter-active, .page-pop-enter-active, .page-tab-enter-active, .page-zoom-enter-active {
+  transition: opacity var(--dur) var(--ease-out), transform var(--dur-slow) var(--spring), filter var(--dur) var(--ease-out);
+}
+.page-push-leave-active, .page-pop-leave-active, .page-tab-leave-active, .page-zoom-leave-active {
+  transition: opacity 0.14s ease-in, transform 0.16s ease-in, filter 0.14s ease-in;
+}
+/* 推入（进入下一级）：新页面从右侧滑入，旧页面向左轻退 */
+.page-push-enter-from { opacity: 0; transform: translate3d(36px, 0, 0); }
+.page-push-leave-to { opacity: 0; transform: translate3d(-14px, 0, 0); }
+/* 返回：方向相反 */
+.page-pop-enter-from { opacity: 0; transform: translate3d(-36px, 0, 0); }
+.page-pop-leave-to { opacity: 0; transform: translate3d(14px, 0, 0); }
+/* 同级切换（顶栏标签）：交叉淡化 + 轻微缩放和模糊 */
+.page-tab-enter-from { opacity: 0; transform: scale(0.985) translate3d(0, 8px, 0); filter: blur(6px); }
+.page-tab-leave-to { opacity: 0; filter: blur(4px); }
+/* 进入播放器：从中间放大 */
+.page-zoom-enter-from { opacity: 0; transform: scale(0.94); }
+.page-zoom-leave-to { opacity: 0; transform: scale(1.02); }
+
+/* ---------- 列表项依次出现 ---------- */
+@keyframes rise-in {
+  from { opacity: 0; transform: translate3d(0, 14px, 0) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+.rise {
+  animation: rise-in 0.55s var(--spring) backwards;
+  animation-delay: calc(var(--i, 0) * 32ms);
+}
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+.fade { animation: fade-in 0.4s var(--ease-out) backwards; animation-delay: calc(var(--i, 0) * 40ms); }
+
+/* ---------- 图片加载后淡入 ---------- */
+img.lazy-img { opacity: 0; transform: scale(1.04); transition: opacity 0.5s var(--ease-out), transform 0.8s var(--spring), filter 0.3s; }
+img.lazy-img.loaded { opacity: 1; transform: none; }
+
+/* ---------- 按压反馈 ---------- */
+.btn, .icon-btn, .chip, .tile, .folder, .seg button, .avatar, .dir {
+  transition: background-color 0.2s, color 0.2s, box-shadow 0.25s, opacity 0.2s, transform 0.35s var(--spring-bouncy);
+}
+.btn:active:not(:disabled), .icon-btn:active, .chip:active, .avatar:active, .seg button:active { transform: scale(0.94); transition-duration: 0.08s; }
+.tile:active, .folder:active { transform: scale(0.97); transition-duration: 0.08s; }
+
+/* ---------- 弹出菜单 ---------- */
+.pop-enter-active { transition: opacity 0.2s var(--ease-out), transform 0.42s var(--spring-bouncy); }
+.pop-leave-active { transition: opacity 0.12s ease-in, transform 0.14s ease-in; }
+.pop-enter-from, .pop-leave-to { opacity: 0; transform: scale(0.9) translate3d(0, -6px, 0); }
+.menu { transform-origin: top right; }
+.menu.up { transform-origin: bottom right; }
+.pop-enter-from.up, .pop-leave-to.up { transform: scale(0.9) translate3d(0, 6px, 0); }
+
+/* ---------- 通知 ---------- */
+.toast-enter-active { transition: opacity 0.3s var(--ease-out), transform 0.5s var(--spring-bouncy); }
+.toast-leave-active { transition: opacity 0.2s ease-in, transform 0.25s ease-in; }
+.toast-enter-from { opacity: 0; transform: translate3d(0, 20px, 0) scale(0.9); }
+.toast-leave-to { opacity: 0; transform: scale(0.94); }
+.toast-move { transition: transform 0.4s var(--spring); }
+
+/* ---------- 通用淡入淡出 ---------- */
+.fade-enter-active, .fade-leave-active { transition: opacity 0.25s var(--ease-out); }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+.slide-up-enter-active { transition: opacity 0.3s var(--ease-out), transform 0.5s var(--spring-bouncy); }
+.slide-up-leave-active { transition: opacity 0.18s ease-in, transform 0.2s ease-in; }
+.slide-up-enter-from, .slide-up-leave-to { opacity: 0; transform: translate3d(0, 16px, 0) scale(0.97); }
+
+/* ---------- 抖动（PIN 错误） ---------- */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-12px); }
+  30% { transform: translateX(10px); }
+  45% { transform: translateX(-7px); }
+  60% { transform: translateX(5px); }
+  75% { transform: translateX(-2px); }
+}
+.shake { animation: shake 0.5s var(--ease-out); }
+
+/* ---------- 骨架屏 ---------- */
+@keyframes shimmer { from { background-position: 150% 0; } to { background-position: -50% 0; } }
+.skel {
+  background: linear-gradient(100deg, #1e1e1e 30%, #2a2a2a 50%, #1e1e1e 70%) #1e1e1e;
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+  border-radius: 6px;
+}
+.skel-line { height: 12px; margin-top: 10px; border-radius: 4px; }
+
+/* ---------- 滑动指示器 ---------- */
+.indicator {
+  position: absolute; pointer-events: none; z-index: 0;
+  transition: transform 0.5s var(--spring), width 0.5s var(--spring), opacity 0.2s;
+}
+
+/* ---------- 减少动态效果 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* 依次出现的序号（用 class 而不是内联 style，兼容严格的 CSP） */
+.d1 { --i: 1; } .d2 { --i: 2; } .d3 { --i: 3; } .d4 { --i: 4; } .d5 { --i: 5; }
+.d6 { --i: 6; } .d7 { --i: 7; } .d8 { --i: 8; } .d9 { --i: 9; } .d10 { --i: 10; }
+/* 骨架屏尺寸 */
+.w-90 { width: 90px; } .w-220 { width: 220px; } .w-80p { width: 80%; } .w-64p { width: 64%; }
+.mt-26 { margin-top: 26px; } .mt-28 { margin-top: 28px; }

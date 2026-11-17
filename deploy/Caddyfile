@@ -1,0 +1,15 @@
+# 可选：源站前面的 Caddy，用于 CDN → 源站之间的 HTTPS（自动申请证书）。
+# 应用层已经端到端加密，这一层只是额外的传输保护；没有这层也不会泄露内容。
+origin.example.com {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8097 {
+		flush_interval -1   # 视频流式传输，不要缓冲
+	}
+}
+
+# 强隔离模式示例：网页模式的前端从不经过 CDN 的子域名加载（DNS 解析直接指向源站），
+# API 和视频走 CDN 域名。服务端启动参数：
+#   veilfin server -web -api-base https://cdn.example.com -web-origin https://app.example.com
+# app.example.com {
+# 	reverse_proxy 127.0.0.1:8097
+# }
